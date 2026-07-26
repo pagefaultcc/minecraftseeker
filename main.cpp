@@ -7,56 +7,19 @@
 #include "src/Job/Job.h"
 #include "src/Worker/Worker.h"
 #include "src/API/API.h"
+#include "src/ServerSeeker/ServerSeeker.h"
 
 int main(int argc, char** argv)
 {
-    if (argc != 3)
-    {
-        std::cout << "Wrong usage! Example: " << argv[0] << " <thread_count> <file>" << "\n";
-        return -1;
-    }
-
     Logging::Initialize();
+
+    SS::Initialize(argc, argv);
+
     Database::Initialize();
-
-    Worker::Initialize(std::stoi(argv[1]));
-
-    FILE* pFile = fopen(argv[2], "r");
-
-    if (!pFile)
-    {
-        SPDLOG_ERROR("No such file as {}.", argv[2]);
-        return -1;
-    }
-
-    char buffer[256];
-    while(fgets(buffer, sizeof(buffer), pFile) != NULL)
-    {
-        auto fnCheck = [](const char *str) -> bool
-        {
-            while (*str)
-            {
-                if (!isspace((unsigned char)*str))
-                    return false;
-
-                str++;
-            }
-
-            return true; 
-        };
-
-        if (fnCheck(buffer))
-            continue;
-
-        Job::CJob job(buffer);
-        Job::AddToQue(job);
-    }
-
-    SPDLOG_INFO("IP's loaded: {}.", Job::GetJobCount());
+    Worker::Initialize(SS::GetConfig()->GetThreadCount());
 
     Worker::Start();
-
-    API::StartServer();
+    API::StartServer(); // would run indefinetly
 
     return 0;
 }

@@ -1,4 +1,7 @@
 #include "Job.h"
+
+#include "../ServerSeeker/ServerSeeker.h"
+
 #include <deque>
 
 std::deque<Job::CJob> g_Jobs;
@@ -18,6 +21,9 @@ Job::CJob Job::GetJob()
         return CJob();
 
     CJob job = std::move(g_Jobs.front());
+
+    if (SS::GetConfig()->ShouldLoop())
+        g_Jobs.push_back(g_Jobs.front());
 
     g_Jobs.pop_front();
 

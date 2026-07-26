@@ -20,10 +20,12 @@ namespace Job
 			m_szIp = cleanIp;
 
 			Database::CRecord Record(m_szIp);
-
 			Minecraft::CMinecraftServer Server(m_szIp);
+			
+			if (!Server.m_bOnline)
+				return;
+			
 			Record.AddRecord(Server.m_vecPlayers);
-
 			Database::GetDatabase()->PushRecord(&Record);
 		}
 
