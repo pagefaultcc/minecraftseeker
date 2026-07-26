@@ -1,0 +1,12 @@
+{
+  "name": "serverseeker",
+  "version": "1.0.0",
+  "dependencies": [
+    "spdlog",
+    "libpqxx",
+    "nlohmann-json",
+    "boost",
+    "reproc",
+    "cpp-httplib"
+  ]
+}
