@@ -14,6 +14,7 @@ The main use case for this tool is **sniping** — finding servers with active p
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [How It Works](#how-it-works)
+- [API](#api)
 - [Roadmap / TODO](#roadmap--todo)
 - [Author](#author)
 
@@ -43,6 +44,17 @@ This allows large IP lists to be scanned quickly in parallel, rather than checki
 
 - A PostgreSQL database (accessible via URI connection string)
 - A text file containing the list of IPs to scan (one IP per line)
+
+### Dependencies
+
+This project uses [vcpkg](https://vcpkg.io/) for dependency management. Required packages:
+
+- `spdlog`
+- `libpqxx`
+- `nlohmann-json`
+- `boost`
+- `reproc`
+- `cpp-httplib`
 
 ## Configuration
 
@@ -83,9 +95,23 @@ This runs the scanner with 100 threads against the IP list in `ips.txt`.
 4. **Player check** — if the response indicates one or more players online, the server is flagged as a hit.
 5. **Logging** — hits are written to the configured PostgreSQL database, including the IP and the timestamp of detection.
 
+## API
+
+ServerSeeker runs a lightweight built-in API server on port `1337`, used to monitor the program while it is running.
+
+| Endpoint              | Method | Description                                      |
+|-----------------------|--------|---------------------------------------------------|
+| `/api/v1/heartbeat`   | GET    | Returns a simple status check confirming the program is running |
+| `/api/v1/status`      | GET    | Returns the current number of active jobs        |
+
+The API server starts automatically alongside the scanner and listens on all network interfaces (`0.0.0.0:1337`).
+
+This is an early version of the API and will continue to be expanded with more endpoints and monitoring data over time.
+
 ## Roadmap / TODO
 
 - [ ] Support custom port scanning (currently hardcoded to the default Minecraft port `25565`)
+- [ ] Expand API with more endpoints and detailed monitoring data
 
 ## Author
 
