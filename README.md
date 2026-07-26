@@ -1,0 +1,92 @@
+# ServerSeeker
+
+ServerSeeker is a multi-threaded scanner for Minecraft servers. It connects to a PostgreSQL database, reads a list of target IPs from a file, and pings each server to check whether any players are currently online. When players are found, the results are logged to the database along with a timestamp.
+
+The main use case for this tool is **sniping** — finding servers with active players as quickly as possible.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [How It Works](#how-it-works)
+- [Roadmap / TODO](#roadmap--todo)
+- [Author](#author)
+
+---
+
+## Overview
+
+Given a text file containing a list of server IPs, ServerSeeker will:
+
+1. Load the IP list from the provided file.
+2. Spin up a configurable number of worker threads.
+3. Ping each server using the Minecraft server list ping protocol.
+4. Check the response for online player counts.
+5. If players are detected, log the server (IP, player count, timestamp) to the connected database.
+
+This allows large IP lists to be scanned quickly in parallel, rather than checking servers one at a time.
+
+## Features
+
+- Multi-threaded scanning with a user-defined thread count
+- Reads target IPs from a simple text file
+- Pings servers using the standard Minecraft protocol
+- Detects and logs servers with online players
+- Stores results in a PostgreSQL database with timestamps
+
+## Requirements
+
+- A PostgreSQL database (accessible via URI connection string)
+- A text file containing the list of IPs to scan (one IP per line)
+
+## Configuration
+
+Database connection settings are defined in `CONFIGURATION.h`.
+
+Currently, only a **PostgreSQL URI connection string** is supported for the database configuration. Example format:
+
+```
+postgres://username:password@host:port/database
+```
+
+Edit `CONFIGURATION.h` and set your connection URI before building/running the program.
+
+## Usage
+
+```
+./serverseeker <thread_count> <ips.txt>
+```
+
+| Argument       | Description                                      |
+|----------------|---------------------------------------------------|
+| `thread_count` | Number of threads to use for scanning             |
+| `ips.txt`      | Path to a file containing the list of IPs to scan |
+
+### Example
+
+```
+./serverseeker 100 ips.txt
+```
+
+This runs the scanner with 100 threads against the IP list in `ips.txt`.
+
+## How It Works
+
+1. **Input parsing** — the IP list file is read and split into individual targets.
+2. **Thread pool** — the specified number of threads is spawned to process the IP list concurrently.
+3. **Server ping** — each thread pings its assigned IP(s) on the Minecraft server port to retrieve server status (including online player count).
+4. **Player check** — if the response indicates one or more players online, the server is flagged as a hit.
+5. **Logging** — hits are written to the configured PostgreSQL database, including the IP and the timestamp of detection.
+
+## Roadmap / TODO
+
+- [ ] Support custom port scanning (currently hardcoded to the default Minecraft port `25565`)
+
+## Author
+
+Made with love by **kenanwastaken**.
