@@ -9,6 +9,7 @@ void Worker::Worker(CThread* curThread)
     while (!curThread->ShouldBeStopped())
     {
         Job::CJob job = Job::GetJob();
+        curThread->SetCurrentJob(job);
 
         if (!job.IsValid())
         {
@@ -34,4 +35,9 @@ void Worker::Start()
 {
 	for (auto& thread : g_Threads)
 		thread.Detach();
+}
+
+std::vector<Worker::CThread>* Worker::GetThreads()
+{
+    return &g_Threads;
 }

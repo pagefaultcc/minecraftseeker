@@ -20,11 +20,10 @@ Job::CJob Job::GetJob()
     if (g_Jobs.empty())
         return CJob();
 
-    CJob job = std::move(g_Jobs.front());
-
     if (SS::GetConfig()->ShouldLoop())
         g_Jobs.push_back(g_Jobs.front());
 
+    CJob job = std::move(g_Jobs.front());
     g_Jobs.pop_front();
 
     return job;

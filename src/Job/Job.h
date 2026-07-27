@@ -29,6 +29,7 @@ namespace Job
 			Database::GetDatabase()->PushRecord(&Record);
 		}
 
+		std::string GetIp() { return m_szIp; }
 		bool IsValid() { return m_bValid; }
 
 	private:

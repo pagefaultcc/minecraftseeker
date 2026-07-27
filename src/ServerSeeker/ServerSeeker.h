@@ -19,6 +19,8 @@ namespace SS
             if (m_iArgc == 4)
                 m_bLoop = true;
 
+            m_iThreadCount = std::stoi(m_ppArgs[1]);
+
             FILE* pFile = fopen(m_ppArgs[2], "r");
 
             if (!pFile)

@@ -5,6 +5,7 @@
 
 #include <thread>
 #include <functional>
+#include "../Job/Job.h"
 
 namespace Worker
 {
@@ -38,9 +39,13 @@ namespace Worker
 		bool ShouldBeStopped() { return m_bRespectfullyStopReq; }
 		void Stop() { m_bRespectfullyStopReq = true; }
 
+		void SetCurrentJob(Job::CJob Job) { m_jCurrentJob = std::move(Job); }
+		Job::CJob GetCurrentJob() { return m_jCurrentJob; }
+
 	private:
 		std::function<void(CThread*)>   m_fnWork;
 		std::thread*                    m_tThread = nullptr;
+		Job::CJob						m_jCurrentJob;
 
 		bool                            m_bWorking = false;
 		bool                            m_bRespectfullyStopReq = false; // Maybe in feature i add force kill option just in case.
@@ -50,4 +55,6 @@ namespace Worker
 
 	void Initialize(int iThreadCount);
 	void Start();
+
+	std::vector<Worker::CThread>* GetThreads();
 }
