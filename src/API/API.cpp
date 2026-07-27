@@ -3,6 +3,7 @@
 #include "../Logging/Logging.h"
 #include "../Job/Job.h"
 #include "../Worker/Worker.h"
+#include "../ServerSeeker/ServerSeeker.h"
 
 #include <httplib.h>
 #include <nlohmann/json.hpp>
@@ -33,6 +34,11 @@ void API::Status(const httplib::Request& req, httplib::Response& res)
         thread_array.push_back(cur_job.IsValid() ? cur_job.GetIp() : "No job." );
     }
 
+    auto Metrics = Worker::GetMetrics();
+    long long current_time = std::time(nullptr); 
+
+    response_json["rate"] = Metrics->m_iServerPinged / (current_time - Metrics->m_iStartTime);
+    response_json["thread_count"] = SS::GetConfig()->GetThreadCount();
     response_json["threads"] = thread_array;
 
     res.set_content(response_json.dump(), "application/json");

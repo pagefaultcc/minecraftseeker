@@ -1,46 +1,59 @@
 #pragma once
 #include <string>
 #include <semaphore>
+#include <memory>
 
 #include "../Database/Database.h"
 #include "../Minecraft/Minecraft.h"
 
-inline std::counting_semaphore<256> g_ConcurrentPings(100);
+inline std::counting_semaphore<256> g_ConcurrentPings(500);
 
 namespace Job
 {
-	class CJob
-	{
-	public:
-		CJob() : m_bValid(false) {}
-		CJob(std::string szIp, uint16_t iPort = 25565) : m_szIp(szIp), m_iPort(iPort), m_bValid(true) {}
+    class CJob
+    {
+    public:
+        CJob() : m_bValid(false) {}
+        CJob(std::string szIp, uint16_t iPort = 25565)
+            : m_szIp(std::move(szIp)), m_iPort(iPort), m_bValid(true) {}
 
-		void Work()
-		{
-			Database::CRecord Record(m_szIp);
+        void Work()
+        {
+            g_ConcurrentPings.acquire();
 
-			g_ConcurrentPings.acquire();
-			Minecraft::CMinecraftServer Server(m_szIp);
-			g_ConcurrentPings.release();
-			
-			if (!Server.m_bOnline)
-				return;
-			
-			Record.AddRecord(Server.m_vecPlayers);
-			Database::GetDatabase()->PushRecord(&Record);
-		}
+            auto server = Minecraft::CMinecraftServer::Create(m_szIp, m_iPort);
 
-		std::string GetIp() { return m_szIp; }
-		bool IsValid() { return m_bValid; }
+            server->Ping(
+                [this](std::shared_ptr<Minecraft::CMinecraftServer> mc)
+                {
+                    Callback(mc);
+                }
+            );
 
-	private:
-		bool m_bValid;
-		std::string m_szIp;
-		uint16_t m_iPort;
-	};
+            server->Run();
+            g_ConcurrentPings.release();
+        }
 
-	void AddToQue(CJob Job);
+        void Callback(std::shared_ptr<Minecraft::CMinecraftServer> Mc)
+        {
+             if (!Mc.get()->m_bOnline)
+                return;
 
-	CJob GetJob();
-	int GetJobCount();
+            Database::CRecord Record(m_szIp);
+            Record.AddRecord(Mc.get()->m_vecPlayers);
+            Database::GetDatabase()->PushRecord(&Record);
+        }
+
+        std::string GetIp() const { return m_szIp; }
+        bool IsValid() const { return m_bValid; }
+
+    private:
+        bool m_bValid = false;
+        std::string m_szIp;
+        uint16_t m_iPort = 25565;
+    };
+
+    void AddToQue(CJob Job);
+    CJob GetJob();
+    int GetJobCount();
 }

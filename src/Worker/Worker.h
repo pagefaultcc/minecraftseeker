@@ -3,12 +3,20 @@
 // this is just a threader only for same function. not a good example but
 //										it should be good because job uses workers.
 
+#include <chrono>
 #include <thread>
 #include <functional>
+
 #include "../Job/Job.h"
 
 namespace Worker
 {
+	struct SMetrics
+	{
+		long long m_iServerPinged;
+		long long m_iStartTime;
+	};
+
 	class CThread
 	{
 	public:
@@ -57,4 +65,6 @@ namespace Worker
 	void Start();
 
 	std::vector<Worker::CThread>* GetThreads();
+
+	SMetrics* GetMetrics();
 }
