@@ -55,6 +55,7 @@ This project uses [vcpkg](https://vcpkg.io/) for dependency management. Required
 - `boost`
 - `reproc`
 - `cpp-httplib`
+- `args`
 
 ## Configuration
 
@@ -82,10 +83,12 @@ Edit `CONFIGURATION.h` and set your connection URI before building/running the p
 ### Example
 
 ```
-./serverseeker 100 ips.txt
+./serverseeker 256 ips.txt
 ```
+If you dont have a IP list yet, you can use a sample from [here](http://20.79.8.185/minecraft_servers.txt).
+This runs the scanner with 256 threads against the IP list in `ips.txt`.
 
-This runs the scanner with 100 threads against the IP list in `ips.txt`.
+*Note:* After some testing, i found 512 threads is a sweet spot for gigabit connection.
 
 ## How It Works
 

@@ -51,6 +51,7 @@ find_package(Boost REQUIRED)
 find_package(reproc++ CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
+find_package(args CONFIG REQUIRED)
 
 target_link_libraries(serverseeker PRIVATE
     spdlog::spdlog
@@ -59,4 +60,5 @@ target_link_libraries(serverseeker PRIVATE
     reproc++
     nlohmann_json::nlohmann_json
     httplib::httplib
+    taywee::args
 )
