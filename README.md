@@ -88,6 +88,7 @@ Edit `CONFIGURATION.h` and set your connection URI before building/running the p
 If you dont have a IP list yet, you can use a sample from [here](http://20.79.8.185/minecraft_servers.txt).
 This runs the scanner with 256 threads against the IP list in `ips.txt`.
 
+*Warning:* If you get `Too many open files.` error, you need to set `ulimit -n 65535` to bypass limits.
 *Note:* After some testing, i found 512 threads is a sweet spot for gigabit connection.
 
 ## How It Works
