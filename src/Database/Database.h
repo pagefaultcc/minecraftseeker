@@ -1,6 +1,12 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+#include <atomic>
+#include <chrono>
+#include <cstdint>
 
 #include <pqxx/pqxx>
 
@@ -9,6 +15,14 @@
 
 namespace Database
 {
+	struct SHit
+	{
+		std::string szIp;
+		uint16_t iPort;
+		std::string szUsername;
+		long long iTimestamp;
+	};
+
 	class CRecord
 	{
 	public:
@@ -16,7 +30,7 @@ namespace Database
 
 		void AddRecord(const std::string& szRecord) { m_szRecords.push_back(szRecord); }
 		void AddRecord(const std::vector<std::string> szRecords) { m_szRecords.insert(m_szRecords.end(), szRecords.begin(), szRecords.end()); }
-		
+
 		std::string GetIp() { return m_szIP; }
 		std::uint16_t GetPort() { return m_iPort; }
 		std::vector<std::string>* GetRecords() { return &m_szRecords; }
@@ -30,92 +44,32 @@ namespace Database
 	class CDatabase
 	{
 	public:
-		CDatabase() : m_pConnection(nullptr)
-		{
-			EnsureConnection();
-		}
+		CDatabase();
+		~CDatabase();
 
-		~CDatabase()
-		{
-
-		}
-
-		pqxx::connection* GetConnection() 
-		{ 
-			EnsureConnection();
-			return m_pConnection; 
-		}
+		pqxx::connection* GetConnection();
 
 		void PushRecord(CRecord* pRecord);
 
+		void StartFlushThread();
+		void StopFlushThread();
+
 	private:
-		void EnsureConnection()
-		{
-			while (true)
-			{
-				try
-				{
-					if (!m_pConnection || !m_pConnection->is_open())
-					{
-						delete m_pConnection;
-						m_pConnection = nullptr;
-
-						m_pConnection = new pqxx::connection(DB_CONNECTION_URI);
-					}
-					break;
-				}
-				catch (const std::exception& e)
-				{
-					std::this_thread::sleep_for(std::chrono::seconds(2));
-				}
-			}
-		}
-
-		void PushRecordInternal(const std::string& szIp, const uint16_t& iPort, const std::string& szUsername, long long iTimeStamp)
-		{
-			EnsureConnection();
-
-			try
-			{
-				pqxx::work txn(*m_pConnection);
-
-				std::string new_entry =
-					"{\"username\":\"" + txn.esc(szUsername) + "\",\"timestamp\":" + std::to_string(iTimeStamp) + "}";
-
-				pqxx::result check = txn.exec("SELECT id FROM servers WHERE ip = $1", pqxx::params{ szIp });
-
-				if (check.empty())
-				{
-					txn.exec(
-						"INSERT INTO servers (ip, seen, last_seen, port) VALUES ($1, jsonb_build_array($2::jsonb), to_timestamp($3), $4)",
-						pqxx::params{ szIp, new_entry, iTimeStamp, iPort }
-					);
-				}
-				else
-				{
-					txn.exec(
-						"UPDATE servers SET seen = seen || $1::jsonb, last_seen = to_timestamp($2) WHERE ip = $3",
-						pqxx::params{ new_entry, iTimeStamp, szIp }
-					);
-				}
-
-				txn.commit();
-			}
-			catch (const pqxx::broken_connection& e)
-			{
-				if (m_pConnection) 
-					try { m_pConnection->close(); } catch (...) {}
-
-				std::this_thread::sleep_for(std::chrono::milliseconds(500));
-				PushRecordInternal(szIp, iPort, szUsername, iTimeStamp);
-			}
-			catch (const std::exception& e)
-			{
-				SPDLOG_INFO("Database error: {}", e.what());
-			}
-		}
+		void EnsureConnection();
+		void FlushLoop();
+		bool FlushBatch(const std::vector<SHit>& batch);
 
 		pqxx::connection* m_pConnection;
+		std::mutex m_ConnectionMutex;
+
+		std::vector<SHit> m_Queue;
+		std::mutex m_QueueMutex;
+		std::condition_variable m_QueueCv;
+		std::thread m_FlushThread;
+		std::atomic<bool> m_bRunning{ false };
+
+		static constexpr size_t MAX_BATCH_SIZE = 2000;
+		static constexpr std::chrono::milliseconds FLUSH_INTERVAL{ 500 };
 	};
 
 	void Initialize();
