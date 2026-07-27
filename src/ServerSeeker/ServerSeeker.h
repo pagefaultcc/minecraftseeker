@@ -48,8 +48,12 @@ namespace SS
                 if (fnCheck(buffer))
                     continue;
 
-                Job::CJob job(buffer);
-                Job::AddToQue(job);
+                std::string cleanIp = buffer;
+                cleanIp.erase(0, cleanIp.find_first_not_of(" \t\n\r\f\v"));
+                cleanIp.erase(cleanIp.find_last_not_of(" \t\n\r\f\v") + 1);
+
+                Job::CJob job(cleanIp);
+                Job::AddToQue(cleanIp);
             }
 
             SPDLOG_INFO("IP's loaded: {}.", Job::GetJobCount());

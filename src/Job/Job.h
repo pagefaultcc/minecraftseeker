@@ -1,8 +1,11 @@
 #pragma once
 #include <string>
+#include <semaphore>
 
 #include "../Database/Database.h"
 #include "../Minecraft/Minecraft.h"
+
+inline std::counting_semaphore<256> g_ConcurrentPings(100);
 
 namespace Job
 {
@@ -14,13 +17,11 @@ namespace Job
 
 		void Work()
 		{
-			std::string cleanIp = m_szIp;
-			cleanIp.erase(0, cleanIp.find_first_not_of(" \t\n\r\f\v"));
-			cleanIp.erase(cleanIp.find_last_not_of(" \t\n\r\f\v") + 1);
-			m_szIp = cleanIp;
-
 			Database::CRecord Record(m_szIp);
+
+			g_ConcurrentPings.acquire();
 			Minecraft::CMinecraftServer Server(m_szIp);
+			g_ConcurrentPings.release();
 			
 			if (!Server.m_bOnline)
 				return;

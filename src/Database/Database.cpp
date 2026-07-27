@@ -10,8 +10,7 @@ void Database::CDatabase::PushRecord(CRecord* pRecord)
 	if (pRecord->GetRecords()->empty())
 		return;
 
-	g_DatabaseMutex.lock();
-
+	std::lock_guard<std::mutex> lock(g_DatabaseMutex);
 	SPDLOG_INFO("Adding record for IP: {}, found {} players.", pRecord->GetIp(), pRecord->GetRecords()->size());
 	
 	for (auto& Record : *pRecord->GetRecords())
@@ -21,8 +20,6 @@ void Database::CDatabase::PushRecord(CRecord* pRecord)
 				std::chrono::system_clock::now().time_since_epoch()
 			).count());
 	}
-	
-	g_DatabaseMutex.unlock();
 }
 
 void Database::Initialize()
