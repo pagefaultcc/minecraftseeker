@@ -7,9 +7,9 @@ The main use case for this tool is **sniping** — finding servers with active p
 ---
 
 ## Media
-<img width="800" height="450" alt="ezgif-36a5629c77105406" src="https://github.com/user-attachments/assets/15e12dbb-027d-43a7-83dc-d10fc50fc804" />
+<img width="2560" height="1440" alt="output" src="https://github.com/user-attachments/assets/22559ec1-d5bc-4c8d-a077-2434f2e3dc00" />
 
---
+---
 
 ## Table of Contents
 
