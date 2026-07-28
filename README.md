@@ -6,6 +6,11 @@ The main use case for this tool is **sniping** — finding servers with active p
 
 ---
 
+## Media
+<img width="800" height="450" alt="ezgif-36a5629c77105406" src="https://github.com/user-attachments/assets/15e12dbb-027d-43a7-83dc-d10fc50fc804" />
+
+--
+
 ## Table of Contents
 
 - [Overview](#overview)
