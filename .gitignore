@@ -17,3 +17,8 @@ cmake-build-*/
 
 # IDE
 .vscode/
+
+# Scan outputs
+results.json
+results.txt
+*.log
