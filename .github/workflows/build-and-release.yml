@@ -22,26 +22,24 @@ jobs:
           - os: ubuntu-latest
             artifact_name: serverseeker-linux-x64.tar.gz
             triplet: x64-linux
-            binary: serverseeker
           - os: windows-latest
             artifact_name: serverseeker-windows-x64.zip
             triplet: x64-windows
-            binary: serverseeker.exe
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Linux Dependencies
+      - name: Install Linux Build Tools & Dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential tar pkg-config
+          sudo apt-get install -y build-essential ninja-build autoconf autoconf-archive automake libtool pkg-config libpq-dev bison flex
 
       - name: Configure CMake (Linux)
         if: runner.os == 'Linux'
         run: |
-          cmake -B build -S . \
+          cmake -B build -S . -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
             -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
