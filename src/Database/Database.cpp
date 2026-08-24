@@ -31,9 +31,11 @@ static std::string EscapeJsonString(const std::string& szInput)
 	return szOut;
 }
 
-Database::CDatabase::CDatabase() : m_pConnection(nullptr)
+Database::CDatabase::CDatabase(const std::string& szDbUri)
+	: m_szDbUri(szDbUri), m_pConnection(nullptr), m_bEnabled(!szDbUri.empty())
 {
-	EnsureConnection();
+	if (m_bEnabled)
+		EnsureConnection();
 }
 
 Database::CDatabase::~CDatabase()
@@ -42,8 +44,16 @@ Database::CDatabase::~CDatabase()
 	delete m_pConnection;
 }
 
+bool Database::CDatabase::IsEnabled() const
+{
+	return m_bEnabled;
+}
+
 void Database::CDatabase::EnsureConnection()
 {
+	if (!m_bEnabled)
+		return;
+
 	std::lock_guard<std::mutex> lock(m_ConnectionMutex);
 
 	while (true)
@@ -54,13 +64,15 @@ void Database::CDatabase::EnsureConnection()
 			{
 				delete m_pConnection;
 				m_pConnection = nullptr;
-				m_pConnection = new pqxx::connection(DB_CONNECTION_URI);
+				m_pConnection = new pqxx::connection(m_szDbUri);
 			}
 			break;
 		}
 		catch (const std::exception&)
 		{
 			std::this_thread::sleep_for(std::chrono::seconds(2));
+			if (!m_bRunning && !m_pConnection)
+				break;
 		}
 	}
 }
@@ -73,7 +85,7 @@ pqxx::connection* Database::CDatabase::GetConnection()
 
 void Database::CDatabase::PushRecord(CRecord* pRecord)
 {
-	if (pRecord->GetRecords()->empty())
+	if (!m_bEnabled || pRecord->GetRecords()->empty())
 		return;
 
 	long long iNow = std::chrono::duration_cast<std::chrono::seconds>(
@@ -91,13 +103,12 @@ void Database::CDatabase::PushRecord(CRecord* pRecord)
 	}
 
 	m_QueueCv.notify_one();
-
 	SPDLOG_INFO("Queued record for IP: {}, found {} players.", pRecord->GetIp(), pRecord->GetRecords()->size());
 }
 
 void Database::CDatabase::StartFlushThread()
 {
-	if (m_bRunning)
+	if (m_bRunning || !m_bEnabled)
 		return;
 
 	m_bRunning = true;
@@ -134,10 +145,8 @@ void Database::CDatabase::FlushLoop()
 			batch.swap(m_Queue);
 		}
 
-		while (!FlushBatch(batch))
-		{
+		while (!FlushBatch(batch) && m_bRunning)
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		}
 
 		batch.clear();
 	}
@@ -154,7 +163,7 @@ void Database::CDatabase::FlushLoop()
 
 bool Database::CDatabase::FlushBatch(const std::vector<SHit>& batch)
 {
-	if (batch.empty())
+	if (batch.empty() || !m_bEnabled)
 		return true;
 
 	struct SGroup
@@ -189,6 +198,9 @@ bool Database::CDatabase::FlushBatch(const std::vector<SHit>& batch)
 	}
 
 	EnsureConnection();
+
+	if (!m_pConnection)
+		return false;
 
 	try
 	{
@@ -242,12 +254,17 @@ bool Database::CDatabase::FlushBatch(const std::vector<SHit>& batch)
 	}
 }
 
-void Database::Initialize()
+void Database::Initialize(const std::string& szDbUri)
 {
-	g_pDatabase = new CDatabase();
-	g_pDatabase->StartFlushThread();
-
-	SPDLOG_INFO("Connected to database, name: {}", g_pDatabase->GetConnection()->dbname());
+	g_pDatabase = new CDatabase(szDbUri);
+	if (!szDbUri.empty())
+	{
+		g_pDatabase->StartFlushThread();
+		if (g_pDatabase->GetConnection())
+			SPDLOG_INFO("Connected to database, name: {}", g_pDatabase->GetConnection()->dbname());
+	}
+	else
+		SPDLOG_INFO("Database logging disabled (no database URI provided).");
 }
 
 Database::CDatabase* Database::GetDatabase()

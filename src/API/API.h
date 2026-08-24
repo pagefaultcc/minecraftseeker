@@ -1,14 +1,15 @@
 #pragma once
 
-#include "httplib.h"
+#include <cstdint>
+#include <httplib.h>
 
 namespace API
 {
-    // /api/v1/heartbeat
     void Heartbeat(const httplib::Request& req, httplib::Response& res);
-
-    // /api/v1/status
     void Status(const httplib::Request& req, httplib::Response& res);
+    void Metrics(const httplib::Request& req, httplib::Response& res);
+    void Hits(const httplib::Request& req, httplib::Response& res);
 
-    void StartServer();
+    void StartServer(uint16_t iPort);
+    void StopServer();
 }

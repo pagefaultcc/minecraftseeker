@@ -25,7 +25,7 @@ namespace Minecraft
             return std::shared_ptr<CMinecraftServer>(new CMinecraftServer(std::move(szIp), iPort));
         }
 
-		void Ping(FnCallback fnCallback,
+        void Ping(FnCallback fnCallback,
                   std::chrono::steady_clock::duration Timeout = std::chrono::seconds(2))
         {
             m_fnCallback = std::move(fnCallback);

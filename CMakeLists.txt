@@ -22,6 +22,12 @@ set(BUILD_SHARED_LIBS OFF)
 
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    add_compile_definitions(_WIN32_WINNT=0x0A00 WIN32_LEAN_AND_MEAN NOMINMAX)
+elseif(WIN32)
+    add_compile_definitions(_WIN32_WINNT=0x0A00 WIN32_LEAN_AND_MEAN NOMINMAX)
+    add_compile_options(-static-libgcc -static-libstdc++)
+    add_compile_options(-fno-omit-frame-pointer)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 else()
     add_compile_options(-static-libgcc -static-libstdc++)
     add_compile_options(-fno-omit-frame-pointer)
@@ -62,3 +68,8 @@ target_link_libraries(serverseeker PRIVATE
     httplib::httplib
     taywee::args
 )
+
+if(WIN32)
+    target_link_libraries(serverseeker PRIVATE ws2_32 crypt32)
+endif()
+

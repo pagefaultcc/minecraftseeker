@@ -2,11 +2,11 @@
 
 void Logging::Initialize()
 {
-    auto console = spdlog::stdout_color_mt("console");
-    spdlog::set_default_logger(console);
+    auto pConsole = spdlog::stdout_color_mt("console");
+    spdlog::set_default_logger(pConsole);
 
-    spdlog::set_pattern("%^%T   %-8l%$   %-50v         %s:%#");
+    spdlog::set_pattern("%^[%T] [%-5l]%$ %v");
     spdlog::set_level(spdlog::level::info);
 
     SPDLOG_INFO("Logging is initialized.");
-}
+}

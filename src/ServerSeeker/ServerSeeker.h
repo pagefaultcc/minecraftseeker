@@ -1,77 +1,38 @@
 #pragma once
 
-#include "../Logging/Logging.h"
-#include "../Job/Job.h"
+#include <string>
+#include <cstdint>
 
 namespace SS
 {
     class Config
     {
     public:
-        Config(int argc, char** argv) : m_iArgc(argc), m_ppArgs(argv) 
-        {
-            if (m_iArgc < 3)
-            {
-                SPDLOG_ERROR("Wrong usage! expected: {} <thread_count> <file_name> [loop]", m_ppArgs[0]);
-                std::exit(-1);
-            }
+        Config(int argc, char** argv);
 
-            if (m_iArgc == 4)
-                m_bLoop = true;
-
-            m_iThreadCount = std::stoi(m_ppArgs[1]);
-
-            FILE* pFile = fopen(m_ppArgs[2], "r");
-
-            if (!pFile)
-            {
-                SPDLOG_ERROR("No such file as {}.", m_ppArgs[2]);
-                std::exit(-1);
-            }
-
-            char buffer[256];
-            while(fgets(buffer, sizeof(buffer), pFile) != NULL)
-            {
-                auto fnCheck = [](const char *str) -> bool
-                {
-                    while (*str)
-                    {
-                        if (!isspace((unsigned char)*str))
-                            return false;
-
-                        str++;
-                    }
-
-                    return true; 
-                };
-
-                if (fnCheck(buffer))
-                    continue;
-
-                std::string cleanIp = buffer;
-                cleanIp.erase(0, cleanIp.find_first_not_of(" \t\n\r\f\v"));
-                cleanIp.erase(cleanIp.find_last_not_of(" \t\n\r\f\v") + 1);
-
-                Job::CJob job(cleanIp);
-                Job::AddToQue(cleanIp);
-            }
-
-            SPDLOG_INFO("IP's loaded: {}.", Job::GetJobCount());
-        }
-
-        bool ShouldLoop() { return m_bLoop; }
-        int  GetThreadCount() { return m_iThreadCount; }
+        bool ShouldLoop() const { return m_bLoop; }
+        int GetThreadCount() const { return m_iThreadCount; }
+        uint16_t GetMinecraftPort() const { return m_iMinecraftPort; }
+        uint16_t GetMonitoringPort() const { return m_iMonitoringPort; }
+        std::string GetFilePath() const { return m_szFilePath; }
+        std::string GetOutputFile() const { return m_szOutputFile; }
+        std::string GetDatabaseUri() const { return m_szDbUri; }
+        int GetTotalIpsLoaded() const { return m_iTotalIpsLoaded; }
 
     private:
-        int     m_iArgc;
-        char**  m_ppArgs;
-            
-        // Actual config
-        bool        m_bLoop;
-        int         m_iThreadCount;
-        const char* m_szFilePath;
+        void PrintUsage(const std::string& szProgramName, const std::string& szErrorMsg = "");
+        void LoadIps();
+
+        bool m_bLoop = false;
+        int m_iThreadCount = 256;
+        uint16_t m_iMinecraftPort = 25565;
+        uint16_t m_iMonitoringPort = 1337;
+        std::string m_szFilePath;
+        std::string m_szOutputFile;
+        std::string m_szDbUri;
+        int m_iTotalIpsLoaded = 0;
     };
 
-    void    Initialize(int argc, char** argv);
+    void Initialize(int argc, char** argv);
     Config* GetConfig();
 }

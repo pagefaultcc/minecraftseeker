@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <vector>
 #include <mutex>
@@ -11,7 +12,6 @@
 #include <pqxx/pqxx>
 
 #include "../Logging/Logging.h"
-#include "../../CONFIGURATION.h"
 
 namespace Database
 {
@@ -29,7 +29,7 @@ namespace Database
 		CRecord(const std::string& szIP, const std::uint16_t& iPort = 25565) : m_szIP(szIP), m_iPort(iPort) {}
 
 		void AddRecord(const std::string& szRecord) { m_szRecords.push_back(szRecord); }
-		void AddRecord(const std::vector<std::string> szRecords) { m_szRecords.insert(m_szRecords.end(), szRecords.begin(), szRecords.end()); }
+		void AddRecord(const std::vector<std::string>& szRecords) { m_szRecords.insert(m_szRecords.end(), szRecords.begin(), szRecords.end()); }
 
 		std::string GetIp() { return m_szIP; }
 		std::uint16_t GetPort() { return m_iPort; }
@@ -44,9 +44,10 @@ namespace Database
 	class CDatabase
 	{
 	public:
-		CDatabase();
+		CDatabase(const std::string& szDbUri);
 		~CDatabase();
 
+		bool IsEnabled() const;
 		pqxx::connection* GetConnection();
 
 		void PushRecord(CRecord* pRecord);
@@ -59,7 +60,9 @@ namespace Database
 		void FlushLoop();
 		bool FlushBatch(const std::vector<SHit>& batch);
 
-		pqxx::connection* m_pConnection;
+		std::string m_szDbUri;
+		bool m_bEnabled = false;
+		pqxx::connection* m_pConnection = nullptr;
 		std::mutex m_ConnectionMutex;
 
 		std::vector<SHit> m_Queue;
@@ -72,6 +75,6 @@ namespace Database
 		static constexpr std::chrono::milliseconds FLUSH_INTERVAL{ 500 };
 	};
 
-	void Initialize();
+	void Initialize(const std::string& szDbUri);
 	CDatabase* GetDatabase();
 }
