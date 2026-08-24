@@ -1,6 +1,6 @@
-# ServerSeeker
+# MinecraftSeeker
 
-ServerSeeker is a high-performance multi-threaded scanner for Minecraft servers. It scans a list of target IPs, pings each server using the Minecraft server list ping protocol, checks for online players, provides real-time progress metrics (masscan-style), serves an HTTP monitoring API, and exports discovered servers to JSON/text files or a PostgreSQL database.
+MinecraftSeeker is a high-performance multi-threaded scanner for Minecraft servers. It scans a list of target IPs, pings each server using the Minecraft server list ping protocol, checks for online players, provides real-time progress metrics (masscan-style), serves an HTTP monitoring API, and exports discovered servers to JSON/text files or a PostgreSQL database.
 
 The main use case for this tool is **sniping** — finding servers with active players as quickly as possible.
 
